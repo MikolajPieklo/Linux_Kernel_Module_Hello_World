@@ -12,3 +12,8 @@ sudo mknod /dev/mydevice c 90 0
 ls /dev/mydevice -al
 gcc test01.c -o test01
 sudo chmod 666 /dev/mydevice
+
+lesson 3:
+sudo chmod 666 /dev/dummydriver
+echo "This is a test" > /dev/dummydriver
+head -n 1 /dev/dummydriver
