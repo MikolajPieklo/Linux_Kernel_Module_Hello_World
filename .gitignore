@@ -3,6 +3,8 @@
 *.ko
 *.mod.*
 *.mod
-*.ko
 *.o
 *.order
+
+#binary file
+test01

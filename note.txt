@@ -4,3 +4,11 @@ sudo rmmode module
 lsmode
 dmesg | tail
 
+
+lesson 2:
+cat /proc/devices
+
+sudo mknod /dev/mydevice c 90 0
+ls /dev/mydevice -al
+gcc test01.c -o test01
+sudo chmod 666 /dev/mydevice
