@@ -1,0 +1,6 @@
+sudo insmod module.ko
+sudo rmmode module
+
+lsmode
+dmesg | tail
+
