@@ -3,6 +3,9 @@
 #include <linux/fs.h>
 #include <linux/cdev.h>
 #include <linux/uaccess.h>
+#include <linux/gpio.h>
+//#include <linux/timer.h>
+//#include <linux/jiffies.h>
 
 /* Meta Information */
 MODULE_LICENSE("GPL");
@@ -20,18 +23,30 @@ static struct cdev my_device;
 #define DRIVER_NAME "dummydriver"
 #define DRIVER_CLASS "MyModuleClass"
 
+/* Variable for timer */
+//static struct timer_list my_timer;
+
+//void timer_cb(struct timer_list *data)
+//{
+//   gpio_direction_output
+//}
+
 /**
  * @brief Read data out of the buffer
  */
 static ssize_t driver_read(struct file *File, char *user_buffer, size_t count, loff_t *offs)
 {
    int to_copy, not_copied, delta = 0;
+   char tmp[3] = " \n";
 
    /* Get amount of data to copy */
-   to_copy = min(count, buffer_pointer);
+   to_copy = min(count, sizeof(tmp));
 
+   /* Read value of button */
+   //printk("Value of button: %d\n", gpio_get_value(17));
+   //tmp[0] = gpio_get_value(17) + '0';
    /* Copy data to user */
-   not_copied = copy_to_user(user_buffer, buffer, to_copy);
+   not_copied = copy_to_user(user_buffer, &tmp, to_copy);
 
    /* Calculate data */
    delta = to_copy - not_copied;
@@ -45,13 +60,27 @@ static ssize_t driver_read(struct file *File, char *user_buffer, size_t count, l
 static ssize_t driver_write(struct file *File, const char *user_buffer, size_t count, loff_t *offs)
 {
    int to_copy, not_copied, delta = 0;
+   char value;
 
    /* Get amount of data to copy */
-   to_copy = min(count, sizeof(buffer));
+   to_copy = min(count, sizeof(value));
 
    /* Copy data to user */
-   not_copied = copy_from_user(buffer, user_buffer, to_copy);
-   buffer_pointer = to_copy;
+   not_copied = copy_from_user(&value, user_buffer, to_copy);
+
+   /* Setting the LED */
+   switch(value)
+   {
+   	   case '0':
+   	      gpio_set_value(21, 0);
+   	      break;
+   	   case '1':
+   	      gpio_set_value(21, 1);
+   	      break;
+   	   default:
+   	      printk("Invalid Input!\n");
+   	      break;
+   }
 
    /* Calculate data */
    delta = to_copy - not_copied;
@@ -126,8 +155,30 @@ static int __init ModuleInit(void)
       goto AddError;
    }
 
+   /* GPIO 21 Init */
+   if (gpio_request(21, "rpi-gpio-21"))
+   {
+      printk("Can not allocate GPIO 21\n");
+      goto AddError;
+   }
+
+   /* Set GPIO 21 direction */
+   if (gpio_direction_output(21, 0))
+   {
+      printk("Can not set GPIO 21 to output\n");
+      goto Gpio21Error;
+   }
+
+   gpio_set_value(21, 1);
+
+   /* Initialize timer */
+  // timer_setup(&my_timer, timer_cb, 0);
+  // mod_timer(&my_timer, jifies + msec_to_jifies(500));
+
    return 0;
 
+Gpio21Error:
+	gpio_free(21);
 AddError:
    device_destroy(my_class, my_device_nr);
 FileError:
@@ -142,6 +193,9 @@ ClassError:
  */
 static void __exit ModuleExit(void)
 {
+   //del_tim(&my_timer);
+   gpio_set_value(21, 0);
+   gpio_free(21);
    cdev_del(&my_device);
    device_destroy(my_class, my_device_nr);
    class_destroy(my_class);
