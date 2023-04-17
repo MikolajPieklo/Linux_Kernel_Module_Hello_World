@@ -6,7 +6,7 @@ dmesg | tail
 
 
 lesson 2:
-cat /proc/devices
+cat /proc/devices - wyswietla liste charakter devices i block debices
 
 sudo mknod /dev/mydevice c 90 0
 ls /dev/mydevice -al
