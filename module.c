@@ -4,8 +4,8 @@
 #include <linux/cdev.h>
 #include <linux/uaccess.h>
 #include <linux/gpio.h>
-//#include <linux/timer.h>
-//#include <linux/jiffies.h>
+#include <linux/timer.h>
+#include <linux/jiffies.h>
 
 /* Meta Information */
 MODULE_LICENSE("GPL");
@@ -24,12 +24,23 @@ static struct cdev my_device;
 #define DRIVER_CLASS "MyModuleClass"
 
 /* Variable for timer */
-//static struct timer_list my_timer;
+static struct timer_list my_timer;
+static int tim_status = 0;
 
-//void timer_cb(struct timer_list *data)
-//{
-//   gpio_direction_output
-//}
+void timer_cb(struct timer_list *data)
+{
+   if (tim_status == 1)
+   {
+      gpio_set_value(21, 0);
+      tim_status = 0;
+   }
+   else
+   {
+   	   gpio_set_value(21, 1);
+   	   tim_status = 1;
+   }
+   mod_timer(&my_timer, jiffies + msecs_to_jiffies(200));
+}
 
 /**
  * @brief Read data out of the buffer
@@ -172,8 +183,8 @@ static int __init ModuleInit(void)
    gpio_set_value(21, 1);
 
    /* Initialize timer */
-  // timer_setup(&my_timer, timer_cb, 0);
-  // mod_timer(&my_timer, jifies + msec_to_jifies(500));
+   timer_setup(&my_timer, timer_cb, 0);
+   mod_timer(&my_timer, jiffies + msecs_to_jiffies(200));
 
    return 0;
 
@@ -193,7 +204,7 @@ ClassError:
  */
 static void __exit ModuleExit(void)
 {
-   //del_tim(&my_timer);
+   del_timer(&my_timer);
    gpio_set_value(21, 0);
    gpio_free(21);
    cdev_del(&my_device);
